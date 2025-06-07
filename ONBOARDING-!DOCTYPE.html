@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudentHub SA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        - Wireframe Feature: A. Welcome Carousel -> Goal: Introduce app -> Presentation: HTML/CSS/JS slides -> Interaction: Click next/prev, dot indicators -> Justification: Standard onboarding.
+        - Wireframe Feature: B. Dashboard - Smart Summary Cards -> Goal: Quick overview -> Presentation: Tailwind cards -> Interaction: Click to navigate (simulated to relevant section) -> Justification: Digestible info chunks.
+        - Wireframe Feature: C. Tertiary Applications - List View -> Goal: Browse institutions -> Presentation: Styled list items/cards -> Interaction: Click to view detail (simulated), Favorite toggle (UI only), ✨ AI Insights button -> Justification: Clear browsing, enhanced with AI tips.
+        - Wireframe Feature: C. Tertiary Applications - Status Tracker -> Goal: Visualize application progress -> Presentation: Chart.js Bar Chart (sample data for 'Pending', 'Approved', 'Declined') in a chart container -> Interaction: View chart -> Justification: Quick visual status. Chart container styled for responsiveness.
+        - Wireframe Feature: D. Accommodation Finder - Map View -> Goal: Geospatial search -> Presentation: Placeholder div styled to look like a map (interactive map API out of scope for single HTML) -> Interaction: Toggle to list view -> Justification: Representational.
+        - Wireframe Feature: D. Accommodation Finder - Filters -> Goal: Refine search -> Presentation: HTML forms (checkboxes, mock sliders) -> Interaction: UI toggle (no backend filtering) -> Justification: Standard filtering UI.
+        - Wireframe Feature: E. Personal Diary - Goals -> Goal: Plan future -> Presentation: Textareas for goals -> Interaction: ✨ AI Career Brainstorm button -> Justification: AI-assisted career exploration.
+        - Wireframe Feature: F. Document Vault - Categories & List -> Goal: Organize documents -> Presentation: Tabs and list items -> Interaction: Click tabs to show/hide (simulated), click items (simulated) -> Justification: Clear organization.
+        - All other textual content and forms will be represented using HTML and Tailwind, with JavaScript for view switching and basic UI interactions. Icons are Unicode characters.
+    -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; color: #212529; }
+        .nav-item { cursor: pointer; padding: 8px 16px; border-radius: 0.375rem; transition: background-color 0.3s; }
+        .nav-item.active, .nav-item:hover { background-color: #007BFF; color: white; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .carousel-slide { display: none; }
+        .carousel-slide.active { display: block; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; color: white; font-weight: 500; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center;}
+        .btn-primary { background-color: #007BFF; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-secondary { background-color: #6C757D; }
+        .btn-secondary:hover { background-color: #545b62; }
+        .btn-ai { background-color: #6A0DAD; /* Purple for AI features */ }
+        .btn-ai:hover { background-color: #50077E; }
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); padding: 1rem; margin-bottom: 1rem; }
+        .input-field { border: 1px solid #CED4DA; padding: 0.5rem; border-radius: 0.375rem; width: 100%; margin-bottom: 0.75rem; }
+        .tab-button { padding: 0.5rem 1rem; border-bottom: 2px solid transparent; cursor: pointer; }
+        .tab-button.active { border-bottom-color: #007BFF; color: #007BFF; font-weight: 600;}
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 0.5rem; text-align: left; }
+        .modal-content h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; text-align: center;}
+        .modal-content .loader { border: 4px solid #f3f3f3; border-top: 4px solid #007BFF; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .unicode-icon { font-size: 1.5em; margin-right: 0.5rem; }
+        .ai-result-content { white-space: pre-wrap; max-height: 300px; overflow-y: auto; background-color: #f9f9f9; padding: 10px; border-radius: 0.25rem; margin-top:10px;}
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-0">
+
+        <div id="onboardingView" class="view active">
+            <div id="carousel" class="text-center py-8">
+                <div class="carousel-slide active p-4">
+                    <div class="text-4xl mb-4">🎓</div>
+                    <h2 class="text-2xl font-semibold mb-2">Welcome to StudentHub SA!</h2>
+                    <p class="text-gray-600 mb-4">Your all-in-one guide to South African tertiary education.</p>
+                </div>
+                <div class="carousel-slide p-4">
+                    <div class="text-4xl mb-4">🏛️🔍</div>
+                    <h2 class="text-xl font-semibold mb-2">Easily Find & Apply to Universities</h2>
+                    <p class="text-gray-600 mb-4">Browse institutions, track applications, and connect directly.</p>
+                </div>
+                <div class="carousel-slide p-4">
+                    <div class="text-4xl mb-4">🏠📍</div>
+                    <h2 class="text-xl font-semibold mb-2">Discover Your Ideal Student Home</h2>
+                    <p class="text-gray-600 mb-4">Search for accommodation near campus with filters for your needs.</p>
+                </div>
+                <div class="carousel-slide p-4">
+                    <div class="text-4xl mb-4">📅📄</div>
+                    <h2 class="text-xl font-semibold mb-2">Organize Your Student Life</h2>
+                    <p class="text-gray-600 mb-4">Keep track of deadlines, store important documents securely, and plan your journey.</p>
+                </div>
+                <div class="carousel-slide p-4">
+                    <div class="text-4xl mb-4">🛡️🔒</div>
+                    <h2 class="text-xl font-semibold mb-2">Privacy & Security</h2>
+                    <p class="text-gray-600 mb-4">Your data is protected. We prioritize your privacy and security. <a href="#" class="text-blue-500 hover:underline" onclick="showModalMessage('Privacy Policy', 'This is a placeholder for the privacy policy details.')">Read our Privacy Policy</a></p>
+                </div>
+                <div class="flex justify-center items-center mt-6 space-x-2">
+                    <button id="prevSlide" class="btn btn-secondary">⬅️ Prev</button>
+                    <div id="carousel-dots" class="flex space-x-1"></div>
+                    <button id="nextSlide" class="btn btn-secondary">Next ➡️</button>
+                </div>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="getStartedBtn" class="btn btn-primary text-lg px-8 py-3">Get Started</button>
+            </div>
+        </div>
+
+        <div id="authView" class="view">
+            <div class="text-center text-3xl font-bold my-6">🎓 StudentHub SA</div>
+            <div class="max-w-md mx-auto card p-6">
+                <div id="loginForm">
+                    <h2 class="text-xl font-semibold mb-4 text-center">Log In</h2>
+                    <input type="email" placeholder="Email Address or Mobile Number" class="input-field">
+                    <input type="password" placeholder="Password" class="input-field">
+                    <a href="#" class="text-sm text-blue-500 hover:underline block mb-4" onclick="showModalMessage('Forgot Password', 'Password recovery instructions would be sent here.')">Forgot Password?</a>
+                    <button class="btn btn-primary w-full mb-2" onclick="navigateToView('mainAppView')">Log In</button>
+                    <p class="text-sm text-center">Don't have an account? <a href="#" class="text-blue-500 hover:underline" onclick="toggleAuthForm()">Sign Up</a></p>
+                </div>
+                <div id="signupForm" style="display:none;">
+                    <h2 class="text-xl font-semibold mb-4 text-center">Sign Up</h2>
+                    <input type="email" placeholder="Email Address" class="input-field">
+                    <input type="tel" placeholder="Mobile Number (Optional)" class="input-field">
+                    <input type="password" placeholder="Create Password" class="input-field">
+                    <input type="password" placeholder="Confirm Password" class="input-field">
+                    <label class="flex items-center text-sm mb-4">
+                        <input type="checkbox" class="mr-2"> I agree to the Terms & Conditions and Privacy Policy.
+                    </label>
+                    <button class="btn btn-primary w-full mb-2" onclick="navigateToView('mainAppView')">Sign Up</button>
+                    <p class="text-sm text-center">Already have an account? <a href="#" class="text-blue-500 hover:underline" onclick="toggleAuthForm()">Log In</a></p>
+                </div>
+                <div class="mt-6 text-center border-t pt-4">
+                    <p class="text-sm font-semibold mb-2">Quick Verification (Optional)</p>
+                    <div class="space-y-2">
+                        <button class="btn btn-secondary w-full text-sm" onclick="showModalMessage('Link with NSFAS', 'This would initiate the NSFAS linking process.')">Link with NSFAS</button>
+                        <button class="btn btn-secondary w-full text-sm" onclick="showModalMessage('Link with SAYouth.mobi', 'This would initiate the SAYouth.mobi linking process.')">Link with SAYouth.mobi</button>
+                        <button class="btn btn-secondary w-full text-sm" onclick="showModalMessage('Link with DHET', 'This would initiate the DHET linking process.')">Link with DHET</button>
+                    </div>
+                     <p class="text-xs text-gray-500 mt-2">Linking your account can help pre-fill information and verify your student status for certain features.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainAppView" class="view">
+            <header class="bg-white shadow-md sticky top-0 z-50 mb-4">
+                <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+                    <div class="text-xl font-bold text-blue-600">🎓 StudentHub SA</div>
+                    <nav class="hidden md:flex space-x-1">
+                        <span class="nav-item active" data-view="dashboardViewContent">🏠 Dashboard</span>
+                        <span class="nav-item" data-view="applicationsViewContent">🏛️ Applications</span>
+                        <span class="nav-item" data-view="accommodationViewContent">🛌 Accommodation</span>
+                        <span class="nav-item" data-view="diaryViewContent">📓 Diary</span>
+                        <span class="nav-item" data-view="vaultViewContent">📂 Vault</span>
+                        <span class="nav-item" data-view="resourcesViewContent">📚 Resources</span>
+                    </nav>
+                    <div class="flex items-center space-x-3">
+                        <span class="cursor-pointer text-xl" onclick="showModalMessage('Notifications', 'You have 3 new notifications (placeholder).')">🔔<span class="text-xs bg-red-500 text-white rounded-full px-1 relative -top-2 -right-1">3</span></span>
+                        <span class="cursor-pointer text-xl" onclick="navigateToSection('diaryViewContent', 'profileSection')">👤</span>
+                         <button id="mobileMenuBtn" class="md:hidden text-2xl">☰</button>
+                    </div>
+                </div>
+                <div id="mobileMenu" class="hidden md:hidden bg-white shadow-lg">
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile active" data-view="dashboardViewContent">🏠 Dashboard</a>
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile" data-view="applicationsViewContent">🏛️ Applications</a>
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile" data-view="accommodationViewContent">🛌 Accommodation</a>
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile" data-view="diaryViewContent">📓 Diary</a>
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile" data-view="vaultViewContent">📂 Vault</a>
+                    <a href="#" class="block py-2 px-4 text-gray-700 hover:bg-gray-100 nav-item-mobile" data-view="resourcesViewContent">📚 Resources</a>
+                </div>
+            </header>
+
+            <main id="mainContent" class="px-4">
+                <div id="dashboardViewContent" class="main-app-section active">
+                    <h1 class="text-2xl font-semibold mb-4">Welcome, Student!</h1>
+                    <p class="mb-6 text-gray-600">This is your central hub for managing your tertiary education journey. From applications to accommodation and essential resources, we've got you covered.</p>
+                    
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">Smart Summary</h2>
+                        <div class="grid md:grid-cols-3 gap-4">
+                            <div class="card">
+                                <h3 class="font-semibold text-lg mb-1">My Applications</h3>
+                                <p class="text-gray-600">3 Pending, 1 Approved, 0 Declined</p>
+                                <button class="text-blue-500 hover:underline mt-2 text-sm" onclick="navigateToSection('applicationsViewContent', 'applicationStatusTracker')">View All</button>
+                            </div>
+                            <div class="card">
+                                <h3 class="font-semibold text-lg mb-1">Upcoming Deadlines</h3>
+                                <p class="text-gray-600">Wits Application closes in 5 days.</p>
+                                <button class="text-blue-500 hover:underline mt-2 text-sm" onclick="navigateToSection('diaryViewContent', 'myJourneyTimeline')">View Calendar</button>
+                            </div>
+                            <div class="card">
+                                <h3 class="font-semibold text-lg mb-1">My Documents</h3>
+                                <p class="text-gray-600">5 documents stored. Last added: ID Copy</p>
+                                <button class="text-blue-500 hover:underline mt-2 text-sm" onclick="navigateToSection('vaultViewContent', null)">View Vault</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">Quick Actions</h2>
+                        <div class="flex space-x-2 flex-wrap">
+                            <button class="btn btn-primary mb-2" onclick="navigateToSection('vaultViewContent', 'uploadDocumentScreen')">➕ Add New Document</button>
+                            <button class="btn btn-primary mb-2" onclick="navigateToSection('applicationsViewContent', 'browseInstitutionsScreen')">➕ New Application Search</button>
+                            <button class="btn btn-primary mb-2" onclick="navigateToSection('diaryViewContent', 'myJourneyTimeline')">📅 View My Calendar</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">Suggested for You</h2>
+                        <div class="card">
+                            <h4 class="font-medium">Study Tip: Effective Note-Taking</h4>
+                            <p class="text-sm text-gray-600">Learn how to take notes that will actually help you revise...</p>
+                            <a href="#" class="text-blue-500 hover:underline text-sm mt-1 inline-block" onclick="showModalMessage('Study Tip', 'Full article on effective note-taking would appear here.')">Read More</a>
+                        </div>
+                        <div class="card mt-2">
+                            <h4 class="font-medium">Sponsored: EduTech Laptop Deals</h4>
+                            <p class="text-sm text-gray-600">Get exclusive student discounts on the latest laptops...</p>
+                            <a href="#" class="text-blue-500 hover:underline text-sm mt-1 inline-block" onclick="showModalMessage('Advertisement', 'Details of the EduTech Laptop Deals would appear here.')">View Deals (Ad)</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">Geo-Based Highlights (Placeholder)</h2>
+                         <div class="card">
+                            <p class="text-gray-600">5 student accommodations found near UCT (Location services needed for actual data).</p>
+                            <button class="text-blue-500 hover:underline mt-2 text-sm" onclick="navigateToSection('accommodationViewContent', null)">Explore Now</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="applicationsViewContent" class="main-app-section">
+                    <h1 class="text-2xl font-semibold mb-4">Tertiary Applications Portal</h1>
+                    <p class="mb-6 text-gray-600">Discover universities and colleges, manage your applications, and track their status. Use the filters to narrow down your search for the perfect institution.</p>
+
+                    <div id="browseInstitutionsScreen">
+                        <div class="flex justify-between items-center mb-4">
+                            <input type="search" placeholder="Search by institution name, course..." class="input-field flex-grow mr-2">
+                            <button class="btn btn-secondary text-sm" onclick="toggleFilters('appFilters')">🔍 Filter</button>
+                        </div>
+                        <div id="appFilters" class="hidden bg-gray-50 p-4 rounded-md mb-4">
+                            <h3 class="font-semibold mb-2">Filter Options</h3>
+                            <div class="grid md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Province</label>
+                                    <select class="input-field"><option>All</option><option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Field of Study</label>
+                                    <select class="input-field"><option>All</option><option>Engineering</option><option>Arts</option><option>Health Sciences</option><option>Commerce</option></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">Institution Type</label>
+                                    <select class="input-field"><option>All</option><option>University</option><option>TVET College</option></select>
+                                </div>
+                            </div>
+                             <button class="btn btn-primary mt-3 text-sm" onclick="applyFilters('appFilters')">Apply Filters</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="card flex items-start space-x-4">
+                                <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-2xl">🏛️</div>
+                                <div class="flex-grow">
+                                    <h3 class="font-semibold text-lg">University of Cape Town</h3>
+                                    <p class="text-sm text-gray-500">Cape Town, Western Cape</p>
+                                    <p class="text-sm text-gray-600 mt-1">Leading research university with a wide range of faculties. Popular fields: Medicine, Law, Commerce.</p>
+                                    <div class="mt-2 space-x-2 flex flex-wrap gap-2">
+                                        <button class="btn btn-primary btn-sm text-xs" onclick="showModalMessage('Apply to UCT', 'This would link to UCTs application portal or an in-app form.')">Apply</button>
+                                        <button class="btn btn-secondary btn-sm text-xs" onclick="showModalMessage('Enquire at UCT', 'This would open a pre-filled email or direct message to UCT admissions.')">Enquire</button>
+                                        <button class="text-gray-500 hover:text-red-500 text-xs p-1 border rounded" onclick="toggleFavorite(this)">☆ Favorite</button>
+                                        <button class="btn btn-ai btn-sm text-xs" onclick="getAIApplicationInsights('University of Cape Town', 'Commerce')">✨ Get AI Application Insights</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card flex items-start space-x-4">
+                                <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-2xl">🏢</div>
+                                <div class="flex-grow">
+                                    <h3 class="font-semibold text-lg">University of Witwatersrand</h3>
+                                    <p class="text-sm text-gray-500">Johannesburg, Gauteng</p>
+                                    <p class="text-sm text-gray-600 mt-1">Renowned for its strong programs in commerce, law, and engineering. Popular fields: Engineering, Health Sciences.</p>
+                                    <div class="mt-2 space-x-2 flex flex-wrap gap-2">
+                                        <button class="btn btn-primary btn-sm text-xs" onclick="showModalMessage('Apply to Wits', 'This would link to Wits application portal or an in-app form.')">Apply</button>
+                                        <button class="btn btn-secondary btn-sm text-xs" onclick="showModalMessage('Enquire at Wits', 'This would open a pre-filled email or direct message to Wits admissions.')">Enquire</button>
+                                        <button class="text-gray-500 hover:text-red-500 text-xs p-1 border rounded" onclick="toggleFavorite(this)">☆ Favorite</button>
+                                         <button class="btn btn-ai btn-sm text-xs" onclick="getAIApplicationInsights('University of Witwatersrand', 'Engineering')">✨ Get AI Application Insights</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="applicationStatusTracker" class="mt-8">
+                         <h2 class="text-xl font-semibold mb-3">My Application Status</h2>
+                         <p class="mb-4 text-gray-600">Here's a visual overview of your current application statuses. Click on an application for more details or to provide further information if required.</p>
+                         <div class="chart-container mb-4">
+                            <canvas id="applicationStatusChart"></canvas>
+                         </div>
+                         <div class="card">
+                             <h4 class="font-medium">UCT - BCom Accounting</h4>
+                             <p class="text-sm">Status: <span class="font-semibold text-yellow-600">Pending</span></p>
+                             <p class="text-xs text-gray-500">Submitted: 2025-05-15</p>
+                             <button class="text-blue-500 hover:underline text-xs mt-1" onclick="showModalMessage('UCT Application Details', 'Detailed status and required documents for UCT BCom Accounting would show here.')">View Details / Update</button>
+                         </div>
+                          <div class="card mt-2">
+                             <h4 class="font-medium">Wits - BSc Engineering</h4>
+                             <p class="text-sm">Status: <span class="font-semibold text-green-600">Offer Made</span></p>
+                             <p class="text-xs text-gray-500">Submitted: 2025-05-10</p>
+                             <button class="text-blue-500 hover:underline text-xs mt-1" onclick="showModalMessage('Wits Application Details', 'Detailed status and required documents for Wits BSc Engineering would show here.')">View Details / Update</button>
+                         </div>
+                    </div>
+                </div>
+
+                <div id="accommodationViewContent" class="main-app-section">
+                    <h1 class="text-2xl font-semibold mb-4">Accommodation Finder</h1>
+                    <p class="mb-6 text-gray-600">Find the perfect student accommodation near your campus. Use the map or list view, and apply filters for price, distance, and amenities to match your needs.</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <button id="mapViewBtn" class="btn btn-secondary btn-sm">🗺️ Map View</button>
+                            <button id="listViewBtn" class="btn btn-primary btn-sm">📋 List View</button>
+                        </div>
+                        <button class="btn btn-secondary text-sm" onclick="toggleFilters('accomFilters')">🔍 Filter</button>
+                    </div>
+
+                    <div id="accomFilters" class="hidden bg-gray-50 p-4 rounded-md mb-4">
+                        <h3 class="font-semibold mb-2">Filter Options</h3>
+                        <div class="grid md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Distance from Campus</label>
+                                <select class="input-field"><option>&lt;1km</option><option>1-3km</option><option>&gt;3km</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Price Range (R/month)</label>
+                                <input type="text" class="input-field" placeholder="e.g., 3000-5000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Property Type</label>
+                                 <select class="input-field"><option>Any</option><option>Apartment</option><option>Commune</option><option>Residence</option></select>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-sm font-medium mb-1">Amenities</label>
+                            <div class="flex flex-wrap gap-2 text-sm">
+                                <label><input type="checkbox" class="mr-1"> Wi-Fi</label>
+                                <label><input type="checkbox" class="mr-1"> Laundry</label>
+                                <label><input type="checkbox" class="mr-1"> Parking</label>
+                                <label><input type="checkbox" class="mr-1"> Furnished</label>
+                                <label><input type="checkbox" class="mr-1"> NSFAS Accredited</label>
+                            </div>
+                        </div>
+                         <button class="btn btn-primary mt-3 text-sm" onclick="applyFilters('accomFilters')">Apply Filters</button>
+                    </div>
+                    
+                    <div id="accommodationMap" class="hidden">
+                        <div class="w-full h-96 bg-gray-300 rounded-md flex items-center justify-center text-gray-500 mb-4">
+                            Interactive Map Placeholder (Requires API integration)
+                        </div>
+                    </div>
+                    <div id="accommodationList" class="space-y-3">
+                        <div class="card">
+                            <img src="https://placehold.co/600x400/E2E8F0/6366F1?text=Student+Digs+1" alt="Accommodation" class="w-full h-40 object-cover rounded-md mb-2">
+                            <h3 class="font-semibold text-lg">Campus Edge Suites</h3>
+                            <p class="text-sm text-gray-500">1.5km from UCT | R4500/month</p>
+                            <p class="text-xs text-gray-600 mt-1">Amenities: Wi-Fi, Furnished, Shuttle</p>
+                            <p class="text-xs">Rating: ★★★★☆ (15 Reviews)</p>
+                            <button class="btn btn-primary btn-sm text-xs mt-2" onclick="showModalMessage('Campus Edge Suites', 'Full details for Campus Edge Suites, including contact and booking info, would appear here.')">View Details</button>
+                        </div>
+                        <div class="card">
+                            <img src="https://placehold.co/600x400/D1FAE5/059669?text=Student+Living+2" alt="Accommodation" class="w-full h-40 object-cover rounded-md mb-2">
+                            <h3 class="font-semibold text-lg">The Student Lodge</h3>
+                            <p class="text-sm text-gray-500">800m from Wits | R5200/month</p>
+                            <p class="text-xs text-gray-600 mt-1">Amenities: Wi-Fi, Laundry, NSFAS Accredited</p>
+                            <p class="text-xs">Rating: ★★★★★ (22 Reviews)</p>
+                            <button class="btn btn-primary btn-sm text-xs mt-2" onclick="showModalMessage('The Student Lodge', 'Full details for The Student Lodge, including contact and booking info, would appear here.')">View Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="diaryViewContent" class="main-app-section">
+                    <h1 class="text-2xl font-semibold mb-4">Personal Diary & Profile</h1>
+                     <p class="mb-6 text-gray-600">Manage your personal information, track your academic journey, set goals, and keep essential contacts handy. This is your personal space to organize and reflect.</p>
+
+                    <div id="profileSection" class="card mb-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center text-3xl">👤</div>
+                            <div>
+                                <h2 class="text-xl font-semibold">John Doe (Placeholder)</h2>
+                                <p class="text-gray-600">john.doe@example.com | 0820000000</p>
+                                <button class="text-blue-500 hover:underline text-sm mt-1" onclick="showModalMessage('Edit Profile', 'Profile editing form would appear here.')">Edit Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="myJourneyTimeline" class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">My Journey Timeline</h2>
+                        <div class="card">
+                            <ul class="space-y-2 text-sm">
+                                <li><strong>2025-05-20:</strong> Received offer from Wits for BSc Engineering. 🎉</li>
+                                <li><strong>2025-05-15:</strong> Uploaded ID Document to vault.</li>
+                                <li><strong>2025-05-10:</strong> Applied to Wits for BSc Engineering.</li>
+                                <li><strong>2025-05-01:</strong> Started searching for accommodation.</li>
+                            </ul>
+                            <button class="btn btn-secondary btn-sm text-xs mt-3" onclick="showModalMessage('Add Manual Entry', 'A form to add a new manual entry to the timeline would appear here.')">➕ Add Manual Entry/Note</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">My Goals</h2>
+                        <div class="card">
+                            <label class="block text-sm font-medium">Preferred Fields of Study:</label>
+                            <textarea id="preferredStudyFields" class="input-field h-16" placeholder="e.g., Computer Science, AI, Data Science">Engineering, Software Development</textarea>
+                            <label class="block text-sm font-medium mt-2">Dream Career(s):</label>
+                            <textarea id="dreamCareers" class="input-field h-16" placeholder="e.g., Software Engineer at Google, AI Researcher">Lead Software Architect</textarea>
+                            <div class="mt-3 space-x-2">
+                                <button class="btn btn-primary btn-sm text-xs" onclick="showModalMessage('Save Goals', 'Goals saved successfully (placeholder).')">Save Goals</button>
+                                <button class="btn btn-ai btn-sm text-xs" onclick="getAICareerPaths()">✨ Brainstorm Career Paths with AI</button>
+                            </div>
+                        </div>
+                    </div>
+                     <div id="settingsSection" class="mb-6">
+                        <h2 class="text-xl font-semibold mb-3">Settings & Preferences</h2>
+                        <div class="card space-y-2">
+                            <a href="#" class="block text-blue-500 hover:underline" onclick="showModalMessage('Notification Settings', 'Notification preferences would be managed here.')">Notification Settings</a>
+                            <a href="#" class="block text-blue-500 hover:underline" onclick="showModalMessage('Privacy Settings', 'Privacy settings and data controls would be managed here.')">Privacy Settings</a>
+                            <a href="#" class="block text-blue-500 hover:underline" onclick="showModalMessage('Linked Accounts', 'Management of linked accounts like NSFAS would be here.')">Linked Accounts (NSFAS, etc.)</a>
+                            <button class="btn btn-primary text-sm mt-4 bg-red-500 hover:bg-red-700" onclick="logout()">Log Out</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vaultViewContent" class="main-app-section">
+                    <h1 class="text-2xl font-semibold mb-4">🔒 My Document Vault</h1>
+                     <p class="mb-6 text-gray-600">Securely store and manage your important documents like ID, proof of residence, academic records, and more. Categorize, tag, and set expiry reminders.</p>
+                     <div class="flex border-b mb-4">
+                        <button class="tab-button active" data-tab="allDocs">All</button>
+                        <button class="tab-button" data-tab="idDocs">ID</button>
+                        <button class="tab-button" data-tab="residenceDocs">Proof of Residence</button>
+                        <button class="tab-button" data-tab="academicDocs">Academic</button>
+                     </div>
+
+                    <div id="allDocs" class="tab-content active">
+                        <p class="text-sm text-gray-500 mb-2">Showing all documents.</p>
+                        <div class="card">
+                            <h3 class="font-semibold">ID Document_JohnDoe.pdf</h3>
+                            <p class="text-xs text-gray-500">Uploaded: 2025-05-15 | Category: ID Documents</p>
+                            <p class="text-xs">Tags: <span class="bg-blue-100 text-blue-700 px-1 rounded">Official</span> <span class="bg-green-100 text-green-700 px-1 rounded">Verified</span></p>
+                            <div class="mt-1 space-x-2 text-xs">
+                                <a href="#" class="text-blue-500" onclick="showModalMessage('View Document', 'The document ID Document_JohnDoe.pdf would be displayed here.')">View</a>
+                                <a href="#" class="text-blue-500" onclick="showModalMessage('Share Document', 'Sharing options for ID Document_JohnDoe.pdf would be here.')">Share</a>
+                                <a href="#" class="text-red-500" onclick="showModalMessage('Delete Document', 'Confirmation to delete ID Document_JohnDoe.pdf would appear here.')">Delete</a>
+                            </div>
+                        </div>
+                         <div class="card mt-2">
+                            <h3 class="font-semibold">ProofOfAddress_Lease.pdf</h3>
+                            <p class="text-xs text-gray-500">Uploaded: 2025-04-20 | Category: Proof of Residence</p>
+                             <p class="text-xs">Expires: 2026-04-19</p>
+                            <div class="mt-1 space-x-2 text-xs">
+                                <a href="#" class="text-blue-500" onclick="showModalMessage('View Document', 'The document ProofOfAddress_Lease.pdf would be displayed here.')">View</a>
+                                <a href="#" class="text-blue-500" onclick="showModalMessage('Share Document', 'Sharing options for ProofOfAddress_Lease.pdf would be here.')">Share</a>
+                                <a href="#" class="text-red-500" onclick="showModalMessage('Delete Document', 'Confirmation to delete ProofOfAddress_Lease.pdf would appear here.')">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                     <div id="idDocs" class="tab-content" style="display:none;">
+                        <p class="text-sm text-gray-500 mb-2">Showing ID documents.</p>
+                         <div class="card">ID Document_JohnDoe.pdf ... (details as above)</div>
+                    </div>
+                     <div id="residenceDocs" class="tab-content" style="display:none;">
+                        <p class="text-sm text-gray-500 mb-2">Showing Proof of Residence documents.</p>
+                        <div class="card">ProofOfAddress_Lease.pdf ... (details as above)</div>
+                    </div>
+                    <div id="academicDocs" class="tab-content" style="display:none;">
+                        <p class="text-sm text-gray-500 mb-2">Showing Academic documents.</p>
+                        <div class="card">MatricCertificate.pdf ...</div>
+                    </div>
+
+
+                    <div id="uploadDocumentScreen" class="mt-6">
+                        <h2 class="text-xl font-semibold mb-3">Upload New Document</h2>
+                        <div class="card">
+                            <input type="file" class="input-field mb-2">
+                            <input type="text" placeholder="Document Name/Title" class="input-field">
+                            <select class="input-field">
+                                <option>Select Category</option>
+                                <option>ID Document</option>
+                                <option>Proof of Residence</option>
+                                <option>Academic Record</option>
+                                <option>Bank Statement</option>
+                                <option>CV/Resume</option>
+                                <option>Other</option>
+                            </select>
+                            <input type="text" placeholder="Add Tags (comma separated)" class="input-field">
+                            <label class="text-sm">Expiry Reminder (Optional): <input type="date" class="input-field inline w-auto"></label>
+                            <button class="btn btn-primary mt-3 w-full" onclick="showModalMessage('Upload Document', 'Document uploaded successfully (placeholder).')">Upload & Save</button>
+                        </div>
+                    </div>
+                     <button class="btn btn-primary mt-6" onclick="navigateToSection('vaultViewContent', 'uploadDocumentScreen')">➕ Upload New Document</button>
+                </div>
+
+                <div id="resourcesViewContent" class="main-app-section">
+                    <h1 class="text-2xl font-semibold mb-4">📚 Student Resources Hub</h1>
+                    <p class="mb-6 text-gray-600">Access a curated list of helpful resources, from study tips and scholarship links to mental health support and transport information. Everything you need to thrive as a student.</p>
+                    <input type="search" placeholder="Search resources..." class="input-field mb-4">
+                    <div class="space-y-3">
+                        <div class="card">
+                            <h3 class="font-semibold">Study Success</h3>
+                            <ul class="list-disc list-inside text-sm text-blue-500 space-y-1">
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Full article on Effective Study Techniques would appear here.')">Effective Study Techniques</a></li>
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Full article on Time Management for Students would appear here.')">Time Management for Students</a></li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h3 class="font-semibold">Financial Aid & Scholarships</h3>
+                            <ul class="list-disc list-inside text-sm text-blue-500 space-y-1">
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Link to NSFAS Official Website & Application Guide.')">NSFAS Official Website & Application Guide</a></li>
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Link to a bursary search portal.')">Search for Bursaries</a></li>
+                            </ul>
+                        </div>
+                         <div class="card">
+                            <h3 class="font-semibold">Mental Health & Wellbeing</h3>
+                            <ul class="list-disc list-inside text-sm text-blue-500 space-y-1">
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Link to SADAG website.')">SADAG (South African Depression and Anxiety Group)</a></li>
+                                <li><a href="#" class="hover:underline" onclick="showModalMessage('Resource', 'Article on Coping with Stress at University.')">Coping with Stress at University</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="genericModal" class="modal">
+      <div class="modal-content">
+        <h3 id="modalTitleText">Notification</h3>
+        <div id="modalLoadingIndicator" class="loader" style="display: none;"></div>
+        <div id="modalMessageBody" class="text-sm">
+            <p id="modalMessageText"></p>
+            <div id="modalAIResponseContent" class="ai-result-content" style="display:none;"></div>
+        </div>
+        <button id="closeModalBtn" class="btn btn-primary mt-4 mx-auto block">Close</button>
+      </div>
+    </div>
+
+    <script>
+        // State and Carousel
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('#carousel .carousel-slide');
+        const dotsContainer = document.getElementById('carousel-dots');
+
+        function updateCarousel() {
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+            updateDots();
+        }
+
+        function createDots() {
+            if (!dotsContainer) return;
+            dotsContainer.innerHTML = ''; // Clear existing dots
+            slides.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.classList.add('h-2', 'w-2', 'bg-gray-300', 'rounded-full', 'cursor-pointer');
+                if (index === currentSlide) {
+                  dot.classList.replace('bg-gray-300', 'bg-blue-500');
+                }
+                dot.addEventListener('click', () => {
+                    currentSlide = index;
+                    updateCarousel();
+                });
+                dotsContainer.appendChild(dot);
+            });
+        }
+        
+        function updateDots() {
+            if (!dotsContainer) return;
+            const dots = dotsContainer.querySelectorAll('span');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('bg-blue-500', index === currentSlide);
+                dot.classList.toggle('bg-gray-300', index !== currentSlide);
+            });
+        }
+        
+        if (slides.length > 0) {
+            createDots();
+            updateCarousel();
+        }
+
+        document.getElementById('nextSlide')?.addEventListener('click', () => {
+            currentSlide = (currentSlide + 1) % slides.length;
+            updateCarousel();
+        });
+
+        document.getElementById('prevSlide')?.addEventListener('click', () => {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            updateCarousel();
+        });
+        
+        document.getElementById('getStartedBtn')?.addEventListener('click', () => {
+            navigateToView('authView');
+        });
+
+        // View Navigation
+        function navigateToView(viewId) {
+            document.querySelectorAll('#app > .view').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(viewId);
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+            window.scrollTo(0,0); 
+        }
+
+        function toggleAuthForm() {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            if (loginForm && signupForm) {
+                loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
+                signupForm.style.display = signupForm.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        const navItems = document.querySelectorAll('header nav .nav-item');
+        const mobileNavItems = document.querySelectorAll('#mobileMenu .nav-item-mobile');
+        const mainAppSections = document.querySelectorAll('#mainContent .main-app-section');
+
+        function switchMainSection(viewId) {
+            mainAppSections.forEach(section => section.classList.remove('active'));
+            const targetSection = document.getElementById(viewId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            navItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewId));
+            mobileNavItems.forEach(item => item.classList.toggle('active', item.dataset.view === viewId));
+            
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) mobileMenu.classList.add('hidden');
+            window.scrollTo(0,0);
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => switchMainSection(item.dataset.view));
+        });
+        mobileNavItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchMainSection(item.dataset.view);
+            });
+        });
+        
+        function navigateToSection(viewId, elementId = null) {
+            const mainAppV = document.getElementById('mainAppView');
+            if (mainAppV && mainAppV.classList.contains('active')) {
+                 switchMainSection(viewId);
+                 if (elementId) {
+                    setTimeout(() => { 
+                        const targetElement = document.getElementById(elementId);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            targetElement.classList.add('bg-yellow-100', 'transition-all', 'duration-1000');
+                            setTimeout(() => targetElement.classList.remove('bg-yellow-100'), 2000);
+                        }
+                    }, 100);
+                }
+            } else {
+                navigateToView('mainAppView');
+                setTimeout(() => navigateToSection(viewId, elementId), 50);
+            }
+        }
+
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+            document.getElementById('mobileMenu')?.classList.toggle('hidden');
+        });
+
+        const appStatusCtx = document.getElementById('applicationStatusChart')?.getContext('2d');
+        if (appStatusCtx) {
+            new Chart(appStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pending', 'Approved', 'Offer Made', 'Declined', 'Awaiting Docs'],
+                    datasets: [{
+                        label: 'Number of Applications',
+                        data: [3, 1, 1, 0, 1], 
+                        backgroundColor: ['rgba(255, 159, 64, 0.7)','rgba(75, 192, 192, 0.7)','rgba(54, 162, 235, 0.7)','rgba(255, 99, 132, 0.7)','rgba(201, 203, 207, 0.7)'],
+                        borderColor: ['rgb(255, 159, 64)','rgb(75, 192, 192)','rgb(54, 162, 235)','rgb(255, 99, 132)','rgb(201, 203, 207)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Application Status Overview' } } }
+            });
+        }
+
+        const mapViewBtn = document.getElementById('mapViewBtn');
+        const listViewBtn = document.getElementById('listViewBtn');
+        const accommodationMap = document.getElementById('accommodationMap');
+        const accommodationList = document.getElementById('accommodationList');
+
+        mapViewBtn?.addEventListener('click', () => {
+            if (accommodationMap) accommodationMap.classList.remove('hidden');
+            if (accommodationList) accommodationList.classList.add('hidden');
+            mapViewBtn.classList.replace('btn-secondary', 'btn-primary');
+            listViewBtn.classList.replace('btn-primary', 'btn-secondary');
+        });
+        listViewBtn?.addEventListener('click', () => {
+            if (accommodationMap) accommodationMap.classList.add('hidden');
+            if (accommodationList) accommodationList.classList.remove('hidden');
+            listViewBtn.classList.replace('btn-secondary', 'btn-primary');
+            mapViewBtn.classList.replace('btn-primary', 'btn-secondary');
+            if (!mapViewBtn.classList.contains('btn-primary') && !listViewBtn.classList.contains('btn-primary')) {
+                listViewBtn.classList.replace('btn-secondary', 'btn-primary');
+            }
+        });
+        if(listViewBtn) listViewBtn.classList.replace('btn-secondary', 'btn-primary');
+        if(accommodationMap) accommodationMap.classList.add('hidden');
+        if(accommodationList) accommodationList.classList.remove('hidden');
+
+        function toggleFavorite(element) {
+            if (element.textContent.includes('☆')) {
+                element.textContent = '★ Favorite';
+                element.classList.replace('text-gray-500', 'text-red-500');
+            } else {
+                element.textContent = '☆ Favorite';
+                element.classList.replace('text-red-500', 'text-gray-500');
+            }
+            showModalMessage('Favorite Toggled', 'Favorite status updated (UI only).');
+        }
+        
+        const modal = document.getElementById('genericModal');
+        const modalTitleTextEl = document.getElementById('modalTitleText');
+        const modalMessageTextEl = document.getElementById('modalMessageText');
+        const modalAIResponseContentEl = document.getElementById('modalAIResponseContent');
+        const modalLoadingIndicatorEl = document.getElementById('modalLoadingIndicator');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        function showModalMessage(title, message, isAIResponse = false, aiContent = "") {
+            if (!modal || !modalTitleTextEl || !modalMessageTextEl || !modalAIResponseContentEl || !modalLoadingIndicatorEl) return;
+            modalTitleTextEl.textContent = title;
+            modalMessageTextEl.textContent = message;
+            modalMessageTextEl.style.display = message ? 'block' : 'none';
+            
+            if (isAIResponse) {
+                modalAIResponseContentEl.innerHTML = aiContent; // Use innerHTML to render formatted text
+                modalAIResponseContentEl.style.display = 'block';
+                modalLoadingIndicatorEl.style.display = 'none';
+            } else {
+                modalAIResponseContentEl.style.display = 'none';
+                modalLoadingIndicatorEl.style.display = 'none';
+            }
+            modal.style.display = "block";
+        }
+
+        function showLoadingModal(title) {
+            if (!modal || !modalTitleTextEl || !modalMessageTextEl || !modalAIResponseContentEl || !modalLoadingIndicatorEl) return;
+            modalTitleTextEl.textContent = title;
+            modalMessageTextEl.style.display = 'none';
+            modalAIResponseContentEl.style.display = 'none';
+            modalLoadingIndicatorEl.style.display = 'block';
+            modal.style.display = "block";
+        }
+
+        closeModalBtn.onclick = function() {
+            if (modal) modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                if (modal) modal.style.display = "none";
+            }
+        }
+
+        function logout() {
+            showModalMessage('Logging Out', 'You are being logged out...');
+            setTimeout(() => {
+                 navigateToView('authView'); 
+                 switchMainSection('dashboardViewContent');
+                 if (modal) modal.style.display = "none"; 
+            }, 1500);
+        }
+
+        function toggleFilters(filterGroupId) {
+            document.getElementById(filterGroupId)?.classList.toggle('hidden');
+        }
+        function applyFilters(filterGroupId) {
+             document.getElementById(filterGroupId)?.classList.add('hidden');
+             showModalMessage('Filters Applied', 'Search filters have been applied (UI only).');
+        }
+
+        const vaultTabButtons = document.querySelectorAll('#vaultViewContent .tab-button');
+        const vaultTabContents = document.querySelectorAll('#vaultViewContent .tab-content');
+
+        vaultTabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                vaultTabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                vaultTabContents.forEach(content => {
+                    if (content) content.style.display = content.id === tabId ? 'block' : 'none';
+                });
+            });
+        });
+        
+        async function callGeminiAPI(prompt) {
+            const apiKey = ""; // Provided by Canvas environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Gemini API Error:", errorData);
+                    return `Error: ${errorData.error?.message || response.statusText}. Please check console for details.`;
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    console.error("Gemini API Response format unexpected:", result);
+                    return "Could not retrieve a valid response from AI. Check console.";
+                }
+            } catch (error) {
+                console.error("Fetch error calling Gemini API:", error);
+                return `Network or other error calling AI: ${error.message}. Check console.`;
+            }
+        }
+
+        async function getAIApplicationInsights(institutionName, fieldOfStudy) {
+            const prompt = `Provide concise application tips for a student applying to a South African institution like "${institutionName}" for a field like "${fieldOfStudy}". Focus on 2-3 key general advice points for such applications. For example, highlight personal statement focus, relevant experiences, or understanding institutional values. Keep it brief and encouraging.`;
+            showLoadingModal(`✨ AI Insights for ${institutionName}`);
+            const aiResponse = await callGeminiAPI(prompt);
+            showModalMessage(`✨ AI Insights for ${institutionName}`, "", true, aiResponse.replace(/\n/g, '<br>'));
+        }
+
+        async function getAICareerPaths() {
+            const fields = document.getElementById('preferredStudyFields')?.value;
+            if (!fields || fields.trim() === "") {
+                showModalMessage("Input Needed", "Please enter your preferred fields of study first.");
+                return;
+            }
+            const prompt = `Based on the preferred fields of study: "${fields}", brainstorm 5-7 potential career paths. For each, provide a very brief (1-2 sentence) description. Format as a list.`;
+            showLoadingModal("✨ AI Brainstorming Career Paths");
+            const aiResponse = await callGeminiAPI(prompt);
+            // Simple Markdown-like list to HTML
+            const formattedResponse = aiResponse
+                .replace(/^\s*[\*\-]\s*/gm, '<li>') // Replace bullets with <li>
+                .replace(/$/gm, '</li>')          // Add </li> at end of lines
+                .replace(/\n<\/li>/g, '</li>')    // Handle newlines correctly
+                .replace(/<li>\s*<\/li>/g, '');   // Remove empty list items
+            showModalMessage("✨ AI Career Path Ideas", `Based on: "${fields}"`, true, `<ul>${formattedResponse}</ul>`);
+        }
+
+        if (slides.length > 0) { 
+           navigateToView('onboardingView');
+        } else { 
+           navigateToView('authView');
+        }
+    </script>
+</body>
+</html>
